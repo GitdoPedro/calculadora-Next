@@ -1,7 +1,16 @@
-const app = require('express')()
-const server = require('http').createServer(app)
-const io = require('socket.io')(server, {cors: {origin: 'http://localhost:3000'}})
+const express = require('express');
+const http = require('http');
+const socketIo = require('socket.io');
+const bodyParser = require('body-parser');
+const sequelize = require('./config/db');
+const CalcModel = require('./models/calcModel');
+const calcRoutes = require('./config/routes'); 
 
+const app = express();
+const server = http.createServer(app);
+const io = socketIo(server, { cors: { origin: 'http://localhost:3000' } });
+
+app.use(bodyParser.json());
 
 const PORT = 3001
 
@@ -41,4 +50,11 @@ io.on('connection', socket =>{
 
 
 
-server.listen(PORT, () => console.log('Server runing....'))
+
+const Calc = CalcModel(sequelize, sequelize.Sequelize.DataTypes);
+sequelize.sync().then(() => {
+   app.use('/api/calc', calcRoutes);
+  server.listen(PORT, () => console.log('Server running....'));
+}).catch((error) => {
+  console.error('Error initializing the database:', error);
+});
